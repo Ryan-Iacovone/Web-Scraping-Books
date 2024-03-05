@@ -65,7 +65,6 @@ def get_genre_subject(url):
 def book_info(url):
 
     html = requests.get(url)
-
     soup = BeautifulSoup(html.content, 'html.parser')
 
     # Title
@@ -82,7 +81,10 @@ def book_info(url):
     # Availability
     sid = soup.find(id='content')
     status = sid.find("span", class_ = "cp-screen-reader-message cp-format-chooser-sr-message")
-    status = status.text.split(",")[4].replace(".", "").strip()
+    try:
+        status = status.text.split(",")[4].replace(".", "").strip() # Need a try block to handel exceptions for beyond book items
+    except IndexError:   
+        status = status.text.split(",")[3].replace(".", "").strip() 
 
     # Rating 
     u_rating = soup.find(class_='rating-info')
