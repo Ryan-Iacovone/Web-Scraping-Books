@@ -23,6 +23,28 @@ monster_books %>% group_by(Status) %>% summarise(count = n())%>% arrange(desc(co
 ```
 
 
+```{r}
+# Testing for how to parse subject and genre columns 
+
+subject <- "Itliong, Larry, 1913-1977 — Juvenile literature, United Farm Workers of America — History — Juvenile literature, Labor leaders — United States — Biography — Juvenile literature, Filipino Americans — Biography — Juvenile literature, Agricultural laborers — Labor unions — United States — History — Biography — Juvenile literature, Discrimination - Kids, Southern Asian/Indian - Kids, Asian American - Kids"
+
+beep <- unlist(str_split(subject, pattern = ",")) # using unlist here creates a character vector from a list (simpler indexing)
+
+
+#Parsing for ratings 
+rating_str <- "4.2 out of 5 stars, based on 83 ratings"
+
+rating_str <- unlist(str_split(rating_str, pattern = ","))[1]
+
+# Pattern that extracts either a decimal/integer as the first number. Don't need second number because it's always 5
+# d represents any digit 0-9, | is the or operator that we're looking for a decimal or integer.
+pattern <- "\\d+\\.\\d+|\\d+" 
+
+rating <- as.numeric(str_extract(rating_str, pattern)) # Make it in a numeric variable because why not?
+
+rating
+```
+
 
 
 
