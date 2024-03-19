@@ -231,3 +231,59 @@ def staff_list_accumulation(list_of_staff_lists):
         sl_df = pd.concat([sl_df, pd.DataFrame([new_row])], ignore_index=True)
     
     return sl_df
+
+
+
+# Function that takes a list of core books (or really normal search results) and returns a list of book ID numbers to use book_info on 
+
+def scrape_core_book_ids(core_url):
+
+    html = requests.get(core_url)
+    s = BeautifulSoup(html.content, 'html.parser')
+
+    total_books = s.find('span', class_='cp-pagination-label')  # Accounting for webpages that have multiple pages 
+    total_books = int(total_books.text.split(" ")[-2])
+    if total_books:
+        numpages = math.ceil(total_books/10)
+    
+
+    # Gathering the name of the list we're scraping
+    list_name = s.find_all('span', class_='cp-pill pill--dismissible') # Gathers the name of the list to be printed out 
+    name_of_book_list = list_name[1].text.split("Remove")[1]
+    name_of_book_list = name_of_book_list.strip()
+
+    # Initializing a list to store all book ids
+    core_item_id_list = []
+
+    for page in range(1, numpages + 1):  # odd way of writing this because range(4) would output as 0,1,2,3. So I have to set a starting point of 1 and add 1 to numpages at the end
+        full_url = core_url + f"&page={page}"
+
+        # Using Selenium to load the page because it gets 10 books per page instead of 5 with a normal get request idk why 
+
+        driver = webdriver.Chrome()
+        driver.get(full_url)
+        driver.implicitly_wait(5) # Wait for the overlay to appear (you may need to adjust the wait time)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll down the page
+
+        # Get the HTML content after the overlay is loaded
+        html = driver.page_source
+        driver.quit() # Don't forget to close the Selenium WebDriver
+
+        # Now using beautiful soup to parse the HTML content
+        soup = BeautifulSoup(html, 'html.parser')
+
+        sleep_time = random.randint(1,15) # Sleep time adjustments 
+        time.sleep(sleep_time)
+        
+        # compiling all the book id numbers into a list   
+        book_divs = soup.find_all('h2', class_='cp-title')
+
+        for book_div in book_divs:
+            link = book_div.find('a')
+            if link:
+                item_id = link['href'].split("/")[3]
+                if item_id.endswith("174"):  # inadvertently filters out all non-books in list
+                    item_id = int(item_id[:-3])
+                    core_item_id_list.append(item_id)
+
+    return core_item_id_list, name_of_book_list, total_books  
