@@ -8,6 +8,7 @@ import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from datetime import datetime
+import json
 
 # get_genre_subject function scrapes the genre and subject info about a book from the given URL
 
@@ -65,6 +66,7 @@ def get_genre_subject(url):
 def book_info(url):
 
     html = requests.get(url)
+
     soup = BeautifulSoup(html.content, 'html.parser')
 
     # Title
@@ -82,7 +84,7 @@ def book_info(url):
     sid = soup.find(id='content')
     status = sid.find("span", class_ = "cp-screen-reader-message cp-format-chooser-sr-message")
     try:
-        status = status.text.split(",")[4].replace(".", "").strip() # Need a try block to handel exceptions for beyond book items
+        status = status.text.split(",")[4].replace(".", "").strip()
     except IndexError:   
         status = status.text.split(",")[3].replace(".", "").strip() 
 
@@ -103,6 +105,9 @@ def book_info(url):
     author = author.text
     a_length = int(len(author)/2)  
 
+    # Book item ID (for merging datasets later)
+    item_id = url.split("/")[-1]
+
     #print("Title: " + title[t_length:] + "\n" + "author" + author[length:] + "\n" + "Item Type: " + item_type + "\n" + "Rating: " + rating + "\n" "Status: " + status + "\n" "Description: " + description + "\n")
  
     new_data = {
@@ -112,14 +117,57 @@ def book_info(url):
     "Rating": rating,
     "Status": status,
     "Description": description,
-    'Genre': genre_values,
+    'Specific Genre': genre_values,
     'Subject': subject_values,
-    'Link': url
+    'Link': url,
+    'item_id': item_id
     } 
 
     new_data = pd.DataFrame(new_data, index=[0])
     
     return new_data
+
+
+
+# Gathering extra info for each book from the original staff_list URL page such as Audiance, book genre, item count and number of holds
+  
+def extra_book_info(s):
+
+    book_info = s.find_all('div', class_='pull-left list_item_image')
+
+    extra_book_info = dfs = pd.DataFrame()
+
+    for div in book_info:
+        # Extract data-analytics-payload attribute which has all the json code 
+        data_payload = div.a['data-analytics-payload']
+        
+        # Parse JSON data
+        payload = json.loads(data_payload)
+        
+        # Extract required information from the json code 
+        bib_info = payload['args'][0]['bib']
+        
+        bib_audience = bib_info.get('bib_audience')
+        bib_fiction_type = bib_info.get('bib_fiction_type')
+        bib_hold_count = bib_info.get('bib_hold_count')
+        bib_total_item_count = bib_info.get('bib_total_item_count')
+        bib_metadata_id = bib_info.get('bib_metadata_id')
+
+        #Temporary dictionay to store the data 
+        tempdf = {
+        "Audiance": bib_audience.title(),
+        "Broad Genre": bib_fiction_type.title(),
+        "Item Count": bib_total_item_count,
+        "Holds": bib_hold_count,
+        "item_id": bib_metadata_id
+        } 
+
+        tempdf = pd.DataFrame(tempdf, index=[0])
+
+        extra_book_info = pd.concat([extra_book_info, tempdf], ignore_index=True)
+
+    return extra_book_info
+
 
 
 # "get_books_from_staff_list" function takes a staff list as input and returns information about all the books in that staff list (uses book_info & get_genre_subject functions)
@@ -185,6 +233,11 @@ def get_books_from_staff_list(staff_pick_url):
 
         intervals += 1
         print(f"Scraped item {intervals} out of {totbok} from \"{name_of_staff_list}\" Staff List \n")
+    
+    # Calling the extra_book_info function to gather additional information about each book and then merge that created df (extra_book_info) with our main df (staff_list_books)
+    extra_book_info_df = extra_book_info(s)
+
+    staff_list_books = pd.merge(staff_list_books, extra_book_info_df, on='item_id')
 
     return staff_list_books, item_id_list, totbok, numpages
 
