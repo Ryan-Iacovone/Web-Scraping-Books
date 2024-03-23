@@ -8,6 +8,21 @@ monster_books <- read_excel("Saved Data Files/Complete_Monster_List.xlsx")
 
 
 ```{r}
+# Grouping by staff list to ensure we're getting them all 
+
+monster_books %>% group_by(`Staff List Name`) %>% summarise(n=n())
+
+```
+
+
+```{r}
+# Filtering by staff list 
+monster_books %>% filter(`Staff List Name` == "Celebrate Winter Holidays!")
+```
+
+
+
+```{r}
 # Finding all the duplicate books 
 monster_books %>% group_by(Link) %>% filter(n()> 1)
  

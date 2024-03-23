@@ -217,7 +217,7 @@ def get_books_from_staff_list(staff_pick_url):
     name_of_staff_list = s.find('h1', class_='list_title') #Gathers the name of the staff list to be printed out 
     name_of_staff_list = name_of_staff_list.text.strip()
 
-    staff_list_books = pd.DataFrame(columns=["Title", "Author", "Item Type", "Rating", "Status", "Description", "Genre", "Subject", "Link"], index=None) # Initialzing our data to store all output from book_info function 
+    staff_list_books = pd.DataFrame(columns=["Title", "Author", "Item Type", "Rating", "Status", "Description", "Specific Genre", "Subject", "Link"], index=None) # Initialzing our data to store all output from book_info function  
     intervals = 0 
 
     for id in item_id_list:
