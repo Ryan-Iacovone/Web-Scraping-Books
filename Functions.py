@@ -135,7 +135,7 @@ def extra_book_info(s):
 
     book_info = s.find_all('div', class_='pull-left list_item_image')
 
-    extra_book_info = dfs = pd.DataFrame()
+    extra_book_info = pd.DataFrame() # initalizing df 
 
     for div in book_info:
         # Extract data-analytics-payload attribute which has all the json code 
@@ -194,6 +194,9 @@ def get_books_from_staff_list(staff_pick_url):
 
     item_id_list = [] # initalizing our list to store item ids
 
+    # Dictionary to store extra book info for each page
+    extra_book_info_list = []
+
     for page in range(1, numpages + 1):  # odd way of writing this because range(4) would output as 0,1,2,3. So I have to set a starting point of 1 and add 1 to numpages at the end
         full_url = staff_pick_url + f"?page={page}"
         html = requests.get(full_url)
@@ -203,6 +206,9 @@ def get_books_from_staff_list(staff_pick_url):
 
         s = BeautifulSoup(html.content, 'html.parser')
         book_divs = s.find_all('div', class_='list_item_title')
+
+        extra_book_info_df = extra_book_info(s) # Gathering extra info for each book in each staff_list URL page (that's why it needs to be placed in for loop, to get all pages)
+        extra_book_info_list.append(extra_book_info_df)
 
         for book_div in book_divs:
             link = book_div.find('a')
@@ -214,10 +220,12 @@ def get_books_from_staff_list(staff_pick_url):
                     item_id = int(item_id[:-3])
                     item_id_list.append(item_id)
 
+    extra_book_info_df = pd.concat(extra_book_info_list, ignore_index=True)
+
     name_of_staff_list = s.find('h1', class_='list_title') #Gathers the name of the staff list to be printed out 
     name_of_staff_list = name_of_staff_list.text.strip()
 
-    staff_list_books = pd.DataFrame(columns=["Title", "Author", "Item Type", "Rating", "Status", "Description", "Specific Genre", "Subject", "Link"], index=None) # Initialzing our data to store all output from book_info function  
+    staff_list_books = pd.DataFrame(columns=["Title", "Author", "Item Type", "Rating", "Status", "Description", "Specific Genre", "Subject", "Link"], index=None) # Initialzing our data to store all output from book_info function 
     intervals = 0 
 
     for id in item_id_list:
@@ -234,9 +242,7 @@ def get_books_from_staff_list(staff_pick_url):
         intervals += 1
         print(f"Scraped item {intervals} out of {totbok} from \"{name_of_staff_list}\" Staff List \n")
     
-    # Calling the extra_book_info function to gather additional information about each book and then merge that created df (extra_book_info) with our main df (staff_list_books)
-    extra_book_info_df = extra_book_info(s)
-
+    # merging the output from book_info function with the output from extra_book_info function
     staff_list_books = pd.merge(staff_list_books, extra_book_info_df, on='item_id')
 
     return staff_list_books, item_id_list, totbok, numpages
