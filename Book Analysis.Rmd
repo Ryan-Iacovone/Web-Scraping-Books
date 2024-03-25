@@ -3,7 +3,7 @@ library(tidyverse)
 library(readxl)
 library(stringr)
 
-monster_books <- read_excel("Saved Data Files/Complete_Monster_List.xlsx")
+monster_books <- read_excel("Saved Data Files/total_results_droppeddups.xlsx")
 ```
 
 
