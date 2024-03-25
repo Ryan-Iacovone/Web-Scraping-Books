@@ -227,6 +227,7 @@ def get_books_from_staff_list(staff_pick_url):
 
     staff_list_books = pd.DataFrame(columns=["Title", "Author", "Item Type", "Rating", "Status", "Description", "Specific Genre", "Subject", "Link"], index=None) # Initialzing our data to store all output from book_info function 
     intervals = 0 
+    total = 0 
 
     for id in item_id_list:
         url = f"https://kdl.bibliocommons.com/v2/record/S174C{id}"
@@ -240,6 +241,7 @@ def get_books_from_staff_list(staff_pick_url):
         staff_list_books = pd.concat([staff_list_books, data], ignore_index=True)
 
         intervals += 1
+  
         print(f"Scraped item {intervals} out of {totbok} from \"{name_of_staff_list}\" Staff List \n")
     
     # merging the output from book_info function with the output from extra_book_info function
@@ -345,4 +347,50 @@ def scrape_core_book_ids(core_url):
                     item_id = int(item_id[:-3])
                     core_item_id_list.append(item_id)
 
-    return core_item_id_list, name_of_book_list, total_books  
+    return core_item_id_list, name_of_book_list, total_books 
+
+
+
+
+def extra_book_info_from_SL(staff_pick_url):
+
+    html = requests.get(staff_pick_url)
+    s = BeautifulSoup(html.content, 'html.parser')
+
+    sleep_time = random.randint(1,15) # Sleep time adjustments 
+    time.sleep(sleep_time)
+
+    total_books = s.find('span', class_='item_count')  # Accounting for webpages that have multiple pages 
+    if total_books is None:
+        total_books = s.find('span', class_='item_count_label')
+
+    match = re.search(r'\d+', total_books.text) # keeps any digits in the string
+    if match:
+        totbok = int(match.group())
+        
+        numpages = math.ceil(totbok/25) # Using math.ceil to round up answer to nearest whole number
+
+    time.sleep(2) # breaking up the inital page requests - Sleep time adjustments 
+
+    item_id_list = [] # initalizing our list to store item ids
+
+    # Dictionary to store extra book info for each page
+    extra_book_info_list = []
+
+    for page in range(1, numpages + 1):  # odd way of writing this because range(4) would output as 0,1,2,3. So I have to set a starting point of 1 and add 1 to numpages at the end
+        full_url = staff_pick_url + f"?page={page}"
+        html = requests.get(full_url)
+
+        sleep_time = random.randint(1,15) # Sleep time adjustments 
+        time.sleep(sleep_time)
+
+        s = BeautifulSoup(html.content, 'html.parser')
+        book_divs = s.find_all('div', class_='list_item_title')
+
+        extra_book_info_df = extra_book_info(s) # Gathering extra info for each book in each staff_list URL page (that's why it needs to be placed in for loop, to get all pages)
+        extra_book_info_list.append(extra_book_info_df)
+
+    extra_book_info_df = pd.concat(extra_book_info_list, ignore_index=True)
+
+
+    return extra_book_info_df

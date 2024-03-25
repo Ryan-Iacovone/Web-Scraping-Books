@@ -21,11 +21,44 @@ monster_books %>% filter(`Staff List Name` == "Celebrate Winter Holidays!")
 ```
 
 
+```{r}
+# Working with numeric variables (distributions)
+
+monster_books %>% ggplot(aes(`Item Count`)) + 
+  geom_histogram() +
+  #geom_density(alpha = .2, fill = "pink2") + geom_density also a nice way to visualize distribution
+  scale_x_continuous(breaks = seq(0, 150, by = 10),
+    limits = c(0, 150)) +
+  labs(title = "Item Count")
+
+  
+  
+monster_books %>% ggplot(aes(Holds)) + 
+  geom_bar() +
+  #scale_x_continuous(breaks = seq(0, 150, by = 10),
+   # limits = c(0, 150)) +
+  labs(title = "Holds")
+
+
+#boxplots w/ filtering 
+
+monster_books %>% filter(Holds < 3 &  `Item Count` < 20) %>%  
+  ggplot(aes(`Item Count`)) + 
+  geom_boxplot() 
+
+```
+
+
+
+
 
 ```{r}
 # Finding all the duplicate books 
-monster_books %>% group_by(Link) %>% filter(n()> 1)
- 
+duplicate_books <- monster_books %>% group_by(Link) %>% filter(n()> 1) %>% summarise(Title, `Item Type`, `Staff List Name`, SL_Link, n = n())
+
+#Counting the total number of duplicate books in our df 
+length(unique(duplicate_books$Link))
+
 ```
 
 
@@ -59,11 +92,6 @@ rating <- as.numeric(str_extract(rating_str, pattern)) # Make it in a numeric va
 
 rating
 ```
-
-
-
-
-
 
 
 
