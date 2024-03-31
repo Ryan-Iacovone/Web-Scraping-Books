@@ -2,27 +2,111 @@
 library(tidyverse)
 library(readxl)
 library(stringr)
+library(writexl)
 
-monster_books <- read_excel("Saved Data Files/total_results_droppeddups.xlsx")
+monster_books <- read_excel("Saved Data Files/Complete_Monster_List.xlsx")
+```
+
+# Data validating and Tidying 
+
+```{r}
+# Dropping duplicate observations (same book in same staff list) 
+
+monster_books <- monster_books %>%
+  distinct(Link, `Staff List Name`, .keep_all = TRUE)  # columns where we drop duplicates, .keep_all function keeps all variables 
+
+#save the df back to the excel file if need be, no need to constatnly be removing the duplicate rows 
+#write_xlsx(monster_books, "Saved Data Files/monster_books_edited.xlsx")
 ```
 
 
 ```{r}
 # Grouping by staff list to ensure we're getting them all 
-
 monster_books %>% group_by(`Staff List Name`) %>% summarise(n=n())
 
+# How many staff lists are we getting?
+length(unique(monster_books$`Staff List Name`))
 ```
 
 
 ```{r}
-# Filtering by staff list 
-monster_books %>% filter(`Staff List Name` == "Celebrate Winter Holidays!")
+# Filtering by staff list to investigate
+monster_books %>% filter(`Staff List Name` == "Oh, how we love you October!")
 ```
 
 
 ```{r}
-# Working with numeric variables (distributions)
+# Finding all the duplicate books and their various staff lists 
+duplicate_books <- monster_books %>% group_by(Link) %>% filter(n()> 1) %>% summarise(Title, `Item Type`, `Staff List Name`, SL_Link, n = n())
+
+#Counting the total number of duplicate books in our df 
+length(unique(duplicate_books$Link))
+
+duplicate_books <- arrange(duplicate_books, Title, `Staff List Name`) # The more appearances here, the more popular the book?
+```
+
+# Wrangling the core books 
+
+
+```{r}
+# find core books that I've already scrapped within staff lists and then getting rid of the original core row
+
+monster_books_woc <- monster_books %>%  filter(!(`Broad Genre` %in% c("Adult Core", "Teen Core", "Youth Core", "Picture Book Core")))
+the_already_core <- monster_books_woc %>% filter(str_detect(`Specific Genre`, "KDL Core") | str_detect(Subject, "KDL Core")) %>% pull(Title)
+the_already_core <- unique(the_already_core)
+
+
+monster_books_ac <- monster_books %>% filter(`Broad Genre` %in% c("Adult Core", "Teen Core", "Youth Core", "Picture Book Core"))
+
+inte <- 0
+
+for (book in monster_books_ac$Title) {
+  if (!(book %in% the_already_core)){
+    print(book)
+    #inte <- inte + 1
+    #cat("Book:", book, "| Count:", inte, "\n")
+    monster_books_woc <- rbind(monster_books_woc, monster_books_ac[monster_books_ac$Title == book, ])
+    monster_books_woc$`Broad Genre`
+  }
+}
+
+
+# Checking the results
+duplicate_books <- monster_books_woc %>% group_by(Link) %>% filter(n()> 1) %>% summarise(Title, `Item Type`, `Staff List Name`, SL_Link, n = n())
+
+#Goes through each valuable core book in the df and attaches the core label in the Broad Genre variable
+monster_books <- monster_books_woc
+
+monster_books <- monster_books %>%
+  mutate(`Broad Genre` = if_else(str_detect(Subject, "KDL Core") & !str_detect(`Broad Genre`, "Core"),
+                                  paste(`Broad Genre`, "Core", sep = ", "), `Broad Genre`))
+
+# Append string "Smith" to the Name variable
+see$`Broad Genre` <- paste(see$`Broad Genre`, "Core", sep = ", ")
+```
+
+
+```{r}
+# remove excess dfs and lists 
+rm(monster_books_woc, the_core, monster_books_ac, inte, duplicate_books)
+
+#write_xlsx(monster_books, "Saved Data Files/monster_books_edited.xlsx")
+```
+
+
+
+# Data Analysis Part 
+
+## Working with numeric variables (distributions)
+
+
+```{r}
+# we only want 1 observation per book when looking at book statistics 
+monster_books <- monster_books %>%
+  distinct(Link, .keep_all = TRUE) 
+
+length(unique(monster_books$Link)) # all unique
+
 
 monster_books %>% ggplot(aes(`Item Count`)) + 
   geom_histogram() +
@@ -45,21 +129,8 @@ monster_books %>% ggplot(aes(Holds)) +
 monster_books %>% filter(Holds < 3 &  `Item Count` < 20) %>%  
   ggplot(aes(`Item Count`)) + 
   geom_boxplot() 
-
 ```
 
-
-
-
-
-```{r}
-# Finding all the duplicate books 
-duplicate_books <- monster_books %>% group_by(Link) %>% filter(n()> 1) %>% summarise(Title, `Item Type`, `Staff List Name`, SL_Link, n = n())
-
-#Counting the total number of duplicate books in our df 
-length(unique(duplicate_books$Link))
-
-```
 
 
 ```{r}
@@ -69,6 +140,9 @@ monster_books %>% group_by(`Item Type`) %>% summarise(count = n())%>% arrange(de
 
 monster_books %>% group_by(Status) %>% summarise(count = n())%>% arrange(desc(count))
 ```
+
+
+## Categorical Variable analyiss + string parsing 
 
 
 ```{r}
@@ -92,8 +166,6 @@ rating <- as.numeric(str_extract(rating_str, pattern)) # Make it in a numeric va
 
 rating
 ```
-
-
 
 
 
