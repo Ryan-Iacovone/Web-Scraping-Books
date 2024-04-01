@@ -3,6 +3,7 @@ library(tidyverse)
 library(readxl)
 library(stringr)
 library(writexl)
+library(ggthemes)
 
 monster_books <- read_excel("Saved Data Files/Complete_Monster_List.xlsx")
 ```
@@ -25,12 +26,11 @@ monster_books <- monster_books %>%
 monster_books %>% group_by(`Staff List Name`) %>% summarise(n=n())
 
 # How many staff lists are we getting?
-length(unique(monster_books$`Staff List Name`))
-```
+sl_num <- length(unique(monster_books$`Staff List Name`))
 
+cat(sl_num, "unique staff lists scrapped")
 
-```{r}
-# Filtering by staff list to investigate
+# Investigating specific staff lists 
 monster_books %>% filter(`Staff List Name` == "Oh, how we love you October!")
 ```
 
@@ -45,8 +45,33 @@ length(unique(duplicate_books$Link))
 duplicate_books <- arrange(duplicate_books, Title, `Staff List Name`) # The more appearances here, the more popular the book?
 ```
 
-# Wrangling the core books 
 
+```{r}
+# Tackling the rating variable 
+rating_str <- "4.2 out of 5 stars, based on 83 ratings"
+
+str_split(rating_str, pattern = " ")[[1]][8]
+str_split(rating_str, " ")[[1]][1]
+
+# idk why this string pattern doesn't work grrrrrrrrrrrrrrrrrrrr
+monster_books <- monster_books %>%
+  mutate(num_rate = case_when(str_split(monster_books$Rating, pattern = " ")[[1]][8] != 0, str_split(monster_books$Rating, " ")[[1]][1], NULL))
+
+
+
+# Pattern that extracts either a decimal/integer as the first number. Don't need second number because it's always 5
+# d represents any digit 0-9, | is the or operator that we're looking for a decimal or integer.
+pattern <- "\\d+\\.\\d+|\\d+" 
+
+rating <- as.numeric(str_extract(rating_str, pattern)) # Make it in a numeric variable because why not?
+
+rating
+```
+
+
+
+
+# Wrangling the core books 
 
 ```{r}
 # find core books that I've already scrapped within staff lists and then getting rid of the original core row
@@ -77,12 +102,10 @@ duplicate_books <- monster_books_woc %>% group_by(Link) %>% filter(n()> 1) %>% s
 #Goes through each valuable core book in the df and attaches the core label in the Broad Genre variable
 monster_books <- monster_books_woc
 
+# Append string "Core" to the `Broad Genre` variable
 monster_books <- monster_books %>%
   mutate(`Broad Genre` = if_else(str_detect(Subject, "KDL Core") & !str_detect(`Broad Genre`, "Core"),
                                   paste(`Broad Genre`, "Core", sep = ", "), `Broad Genre`))
-
-# Append string "Smith" to the Name variable
-see$`Broad Genre` <- paste(see$`Broad Genre`, "Core", sep = ", ")
 ```
 
 
@@ -92,7 +115,6 @@ rm(monster_books_woc, the_core, monster_books_ac, inte, duplicate_books)
 
 #write_xlsx(monster_books, "Saved Data Files/monster_books_edited.xlsx")
 ```
-
 
 
 # Data Analysis Part 
@@ -116,12 +138,7 @@ monster_books %>% ggplot(aes(`Item Count`)) +
   labs(title = "Item Count")
 
   
-  
-monster_books %>% ggplot(aes(Holds)) + 
-  geom_bar() +
-  #scale_x_continuous(breaks = seq(0, 150, by = 10),
-   # limits = c(0, 150)) +
-  labs(title = "Holds")
+
 
 
 #boxplots w/ filtering 
@@ -129,6 +146,34 @@ monster_books %>% ggplot(aes(Holds)) +
 monster_books %>% filter(Holds < 3 &  `Item Count` < 20) %>%  
   ggplot(aes(`Item Count`)) + 
   geom_boxplot() 
+
+summary(monster_books$Holds)
+summary(monster_books$`Item Count`)
+
+# Audiance
+monster_books %>% ggplot(aes(Audiance)) + 
+  geom_bar(color = "black", fill = "red") +
+  scale_y_continuous(breaks = seq(0, 1200, by = 100),
+                      limits = c(0, 1200)) +
+  labs(title = "Audiance",
+       y= "Count") +
+
+  theme_clean()
+
+
+item_type_df <- monster_books %>% group_by(`Item Type`) %>% summarise(count = n())
+
+item_type_df %>% mutate(`Item Type` = fct_reorder(`Item Type`, desc(count))) %>% # fct_reorder function to reorder the Item Type based on count 
+  filter(!`Item Type` %in% c("Book", "Unknown")) %>%     # Quick filter statement for increased clarity
+  ggplot(aes(`Item Type`, count)) + 
+  geom_bar(stat = 'identity',color = "black", fill = "red") +
+  #scale_y_continuous(breaks = seq(0, 1200, by = 100),
+  #                    limits = c(0, 1200)) +
+  labs(title = "Item Type",
+       y= "Count") +
+
+  theme_clean() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
 
@@ -151,20 +196,6 @@ monster_books %>% group_by(Status) %>% summarise(count = n())%>% arrange(desc(co
 subject <- "Itliong, Larry, 1913-1977 — Juvenile literature, United Farm Workers of America — History — Juvenile literature, Labor leaders — United States — Biography — Juvenile literature, Filipino Americans — Biography — Juvenile literature, Agricultural laborers — Labor unions — United States — History — Biography — Juvenile literature, Discrimination - Kids, Southern Asian/Indian - Kids, Asian American - Kids"
 
 beep <- unlist(str_split(subject, pattern = ",")) # using unlist here creates a character vector from a list (simpler indexing)
-
-
-#Parsing for ratings 
-rating_str <- "4.2 out of 5 stars, based on 83 ratings"
-
-rating_str <- unlist(str_split(rating_str, pattern = ","))[1]
-
-# Pattern that extracts either a decimal/integer as the first number. Don't need second number because it's always 5
-# d represents any digit 0-9, | is the or operator that we're looking for a decimal or integer.
-pattern <- "\\d+\\.\\d+|\\d+" 
-
-rating <- as.numeric(str_extract(rating_str, pattern)) # Make it in a numeric variable because why not?
-
-rating
 ```
 
 

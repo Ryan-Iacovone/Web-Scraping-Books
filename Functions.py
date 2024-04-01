@@ -138,8 +138,12 @@ def extra_book_info(s):
     extra_book_info = pd.DataFrame() # initalizing df 
 
     for div in book_info:
-        # Extract data-analytics-payload attribute which has all the json code 
-        data_payload = div.a['data-analytics-payload']
+        # Extract data-analytics-payload attribute which has all the json code (in a try block to deal with ' Web Resources' in staff lists)
+        try:
+            data_payload = div.a['data-analytics-payload']
+        except KeyError:
+        # Handle the case where 'data-analytics-payload' attribute is not present
+            continue
         
         # Parse JSON data
         payload = json.loads(data_payload)
