@@ -55,7 +55,7 @@ str_split(rating_str, " ")[[1]][1]
 
 # idk why this string pattern doesn't work grrrrrrrrrrrrrrrrrrrr
 monster_books <- monster_books %>%
-  mutate(num_rate = case_when(str_split(monster_books$Rating, pattern = " ")[[1]][8] != 0, str_split(monster_books$Rating, " ")[[1]][1], NULL))
+  mutate(num_rate = ifelse(str_split(monster_books$Rating, pattern = " ")[[1]][8] != 0, str_split(monster_books$Rating, " ")[[1]][1], NULL))
 
 
 
@@ -130,23 +130,13 @@ monster_books <- monster_books %>%
 length(unique(monster_books$Link)) # all unique
 
 
-monster_books %>% ggplot(aes(`Item Count`)) + 
-  geom_histogram() +
-  #geom_density(alpha = .2, fill = "pink2") + geom_density also a nice way to visualize distribution
-  scale_x_continuous(breaks = seq(0, 150, by = 10),
-    limits = c(0, 150)) +
-  labs(title = "Item Count")
-
-  
-
-
-
 #boxplots w/ filtering 
 
 monster_books %>% filter(Holds < 3 &  `Item Count` < 20) %>%  
   ggplot(aes(`Item Count`)) + 
   geom_boxplot() 
 
+# Summary statistics for our numeric variables 
 summary(monster_books$Holds)
 summary(monster_books$`Item Count`)
 
@@ -170,6 +160,19 @@ item_type_df %>% mutate(`Item Type` = fct_reorder(`Item Type`, desc(count))) %>%
   #scale_y_continuous(breaks = seq(0, 1200, by = 100),
   #                    limits = c(0, 1200)) +
   labs(title = "Item Type",
+       y= "Count") +
+
+  theme_clean() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+# Broad Genre
+monster_books %>% group_by(`Broad Genre`) %>% summarise(count = n()) %>%
+  mutate(`Broad Genre` = fct_reorder(`Broad Genre`, desc(count))) %>%
+  ggplot(aes(`Broad Genre`, count)) + 
+  geom_bar(stat = 'identity', color = "black", fill = "red") +
+  #scale_y_continuous(breaks = seq(0, 1200, by = 100),
+  #                    limits = c(0, 1200)) +
+  labs(title = "Audiance",
        y= "Count") +
 
   theme_clean() +
