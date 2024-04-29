@@ -203,6 +203,48 @@ beep <- unlist(str_split(subject, pattern = ",")) # using unlist here creates a 
 
 
 
+######################### Sheri Data set #####################################
+```{r}
+library(tidyverse)
+library(readxl)
+library(stringr)
+library(writexl)
+library(ggthemes)
+
+kdl_report <- read_excel("Saved Data Files/Sheri Report.xlsx") %>% na.omit()
+```
+
+```{r}
+kdl_report$ISBN <- str_remove_all(kdl_report$ISBN, "i")
+kdl_report <- kdl_report %>% filter(str_starts(ISBN, "9")) #filter to find all odd ISBN's filter(!str_starts(ISBN, "9.*"))
+
+kdl_report$title <- str_replace_all(kdl_report$title, "/", "")
+
+kdl_report$call_num <- str_to_title(kdl_report$call_num)
+
+
+
+#Creating audience variable 
+kdl_report <- kdl_report %>% 
+  mutate(audience = case_when(str_detect(call_num, "J ") ~ "J",
+                              str_detect(call_num, "Teen") ~ "TEEN",
+                              str_detect(call_num, "Je") ~ "JE",
+                              str_detect(call_num, "Er") ~ "ER",
+                              str_detect(call_num, "Jnf") ~ "JNF",
+                              str_detect(call_num, "\\bE\\s") ~ "E", # making the search for E case sensitive fixes it pull adult items like tcrime
+                              str_detect(call_num, "PB BOARD") ~ "Board",
+                              TRUE ~ "Adult")) 
+```
+
+
+```{r}
+#save the modified sheri report back to excel to load up in python
+
+write_xlsx(kdl_report, "Saved Data Files/kdl_report_edited.xlsx")
+```
+
+
+
 
 ```{r eval=FALSE, include=FALSE}
 # Add a unique ID column to each book (don't need this because link is unique)
