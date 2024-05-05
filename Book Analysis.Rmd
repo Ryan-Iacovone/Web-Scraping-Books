@@ -224,7 +224,7 @@ kdl_report$call_num <- str_to_title(kdl_report$call_num)
 
 
 
-#Creating audience variable 
+# Creating audience variable 
 kdl_report <- kdl_report %>% 
   mutate(audience = case_when(str_detect(call_num, "J ") ~ "J",
                               str_detect(call_num, "Teen") ~ "TEEN",
@@ -240,7 +240,7 @@ kdl_report <- kdl_report %>%
 ```{r}
 #save the modified sheri report back to excel to load up in python
 
-write_xlsx(kdl_report, "Saved Data Files/kdl_report_edited.xlsx")
+#write_xlsx(kdl_report, "Saved Data Files/kdl_report_edited.xlsx")
 ```
 
 
