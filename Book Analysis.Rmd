@@ -17,7 +17,7 @@ monster_books <- monster_books %>%
   distinct(Link, `Staff List Name`, .keep_all = TRUE)  # columns where we drop duplicates, .keep_all function keeps all variables 
 
 #save the df back to the excel file if need be, no need to constatnly be removing the duplicate rows 
-#write_xlsx(monster_books, "Saved Data Files/monster_books_edited.xlsx")
+write_xlsx(monster_books, "Saved Data Files/monster_books_edited.xlsx")
 ```
 
 
