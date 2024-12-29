@@ -11,7 +11,6 @@ from datetime import datetime
 import json
 
 # get_genre_subject function scrapes the genre and subject info about a book from the given URL
-
 def get_genre_subject(url):
     driver = webdriver.Chrome()
     driver.get(url)
@@ -62,7 +61,6 @@ def get_genre_subject(url):
 
 
 # Takes in a KDL link to get basic information about a single book like title, description, and rating 
-
 def book_info(url):
 
     html = requests.get(url)
@@ -130,7 +128,6 @@ def book_info(url):
 
 
 # Gathering extra info for each book from the original staff_list URL page such as Audiance, book genre, item count and number of holds
-  
 def extra_book_info(s):
 
     book_info = s.find_all('div', class_='pull-left list_item_image')
@@ -174,8 +171,7 @@ def extra_book_info(s):
 
 
 
-# "get_books_from_staff_list" function takes a staff list as input and returns information about all the books in that staff list (uses book_info & get_genre_subject functions)
-
+# Takes a staff list as input and returns information about all the books in that staff list (uses book_info & get_genre_subject functions)
 def get_books_from_staff_list(staff_pick_url):
 
     html = requests.get(staff_pick_url)
@@ -300,7 +296,6 @@ def staff_list_accumulation(list_of_staff_lists):
 
 
 # Function that takes a list of core books (or really normal search results) and returns a list of book ID numbers to use book_info on 
-
 def scrape_core_book_ids(core_url):
 
     html = requests.get(core_url)
@@ -324,7 +319,6 @@ def scrape_core_book_ids(core_url):
         full_url = core_url + f"&page={page}"
 
         # Using Selenium to load the page because it gets 10 books per page instead of 5 with a normal get request idk why 
-
         driver = webdriver.Chrome()
         driver.get(full_url)
         driver.implicitly_wait(5) # Wait for the overlay to appear (you may need to adjust the wait time)
@@ -395,6 +389,5 @@ def extra_book_info_from_SL(staff_pick_url):
         extra_book_info_list.append(extra_book_info_df)
 
     extra_book_info_df = pd.concat(extra_book_info_list, ignore_index=True)
-
 
     return extra_book_info_df
