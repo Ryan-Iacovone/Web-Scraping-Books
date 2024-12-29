@@ -1,3 +1,5 @@
-# Web-Scraping-Books
+# Web Scraping Book Details
 
-Scraping basic book information from the web. Used staff lists to identify books to scrape and then compiled lists of staff lists to make the process more efficient
+Scraping basic information about popular books from the web. Used staff lists to identify books to scrape. 
+
+Then I built a program to take a list of staff lists as input and extract all relevant book info from each list.
