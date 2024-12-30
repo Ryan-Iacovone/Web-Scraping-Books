@@ -1,4 +1,4 @@
-# Web Scraping Book Details
+# Web Scraping Book Program
 
 Scraping basic information about popular books from the web. Used staff lists to identify books to scrape. 
 
